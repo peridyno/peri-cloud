@@ -1,0 +1,5 @@
+<server>
+    <application-settings location="*">
+		<web-sockets>false</web-sockets>
+    </application-settings>
+</server>
