@@ -1,26 +1,27 @@
 #include "WSimulationCanvas.h"
 
-// #include <PhysIKA/Rendering2/Utility.h>
-// #include <PhysIKA/Rendering2/RenderTarget.h>
-// #include <PhysIKA/Rendering2/RenderEngine.h>
-
 #include <Wt/WMatrix4x4.h>
 #include <Wt/WApplication.h>
 #include <SceneGraph.h>
+
+#include <Peridynamics/ElasticBody.h>
+#include <Peridynamics/ElasticityModule.h>
+#include <ParticleSystem/StaticBoundary.h>
 
 #include "ParticleSystem/StaticBoundary.h"
 #include "ParticleSystem/ParticleFluid.h"
 
 #include <Module/CalculateNorm.h>
+#include <ColorMapping.h>
 
 #include <GLRenderEngine.h>
 #include <GLPointVisualModule.h>
+#include <GLSurfaceVisualModule.h>
 
-#include <ColorMapping.h>
 
 using namespace dyno;
 
-WSimulationCanvas::WSimulationCanvas() :	WGLWidget()
+WSimulationCanvas::WSimulationCanvas() : WGLWidget()
 {
 	mRenderEngine = new dyno::GLRenderEngine;
 
@@ -35,6 +36,8 @@ WSimulationCanvas::WSimulationCanvas() :	WGLWidget()
 	this->mouseWheel().connect(this, &WSimulationCanvas::onMouseWheeled);
 	this->mouseMoved().connect(this, &WSimulationCanvas::onMouseMoved);
 	this->mouseWentUp().connect(this, &WSimulationCanvas::onMouseReleased);
+
+	this->setAttributeValue("oncontextmenu", "return false;");
 }
 
 WSimulationCanvas::~WSimulationCanvas()
@@ -55,44 +58,57 @@ void WSimulationCanvas::initializeGL()
 
 	if (!mSceneGraph)
 	{
-		mSceneGraph = std::make_shared<dyno::SceneGraph>();
+		mSceneGraph = &(dyno::SceneGraph::getInstance());
 
-		auto root = std::make_shared<dyno::StaticBoundary<DataType3f>>();
-		//root->loadCube(Vec3f(-0.5, 0, -0.5), Vec3f(1.5, 2, 1.5), 0.02, true);
-		root->loadSDF("E:/WtPhysIKA/data/bowl.sdf", false);
+	}
+	if (0) {
 
-		mSceneGraph->setRootNode(root);
+		auto root = mSceneGraph->createNewScene<StaticBoundary<DataType3f>>();	
+		auto bunny = std::make_shared<ElasticBody<DataType3f>>();
+		auto render = std::make_shared<GLSurfaceVisualModule>();		
 
-		auto fluid = std::make_shared<dyno::ParticleFluid<dyno::DataType3f>>();
-		fluid->loadParticles(dyno::Vec3f(0.5, 0.2, 0.4), dyno::Vec3f(0.7, 1.5, 0.6), 0.005);
-		fluid->setMass(100);
+		bunny->loadParticles("data/bunny_points.obj");
+		bunny->loadSurface("data/bunny_mesh.obj");
+		bunny->translate(Vec3f(0.5f, 0.5f, 0.5f));
+				
+		render->setColor(Vec3f(1, 1, 0));
+		bunny->getSurfaceNode()->currentTopology()->connect(render->inTriangleSet());
+		bunny->getSurfaceNode()->graphicsPipeline()->pushModule(render);
 
-		root->addParticleSystem(fluid);
-//		mSceneGraph->setRootNode(fluid);
+		root->addParticleSystem(bunny);
 
-		auto calculateNorm = std::make_shared<dyno::CalculateNorm<dyno::DataType3f>>();
-		auto colorMapper = std::make_shared<dyno::ColorMapping<dyno::DataType3f>>();
-		colorMapper->varMax()->setValue(5.0f);
+		//auto root = std::make_shared<dyno::StaticBoundary<DataType3f>>();
+		////root->loadCube(Vec3f(-0.5, 0, -0.5), Vec3f(1.5, 2, 1.5), 0.02, true);
+		//root->loadSDF("data/bowl.sdf", false);
 
-		fluid->currentVelocity()->connect(calculateNorm->inVec());
-		calculateNorm->outNorm()->connect(colorMapper->inScalar());
+		//mSceneGraph->setRootNode(root);
 
-		fluid->graphicsPipeline()->pushModule(calculateNorm);
-		fluid->graphicsPipeline()->pushModule(colorMapper);
+		//auto fluid = std::make_shared<dyno::ParticleFluid<dyno::DataType3f>>();
+		//fluid->loadParticles(dyno::Vec3f(0.5, 0.2, 0.4), dyno::Vec3f(0.7, 1.5, 0.6), 0.005);
+		//fluid->setMass(100);
 
-		auto ptRender = std::make_shared<dyno::GLPointVisualModule>();
-		ptRender->setColor(dyno::Vec3f(1, 0, 0));
-		ptRender->setColorMapMode(dyno::GLPointVisualModule::PER_VERTEX_SHADER);
-		ptRender->setColorMapRange(0, 5);
+		//root->addParticleSystem(fluid);
 
-		fluid->currentTopology()->connect(ptRender->inPointSet());
-		colorMapper->outColor()->connect(ptRender->inColor());
+		//auto calculateNorm = std::make_shared<dyno::CalculateNorm<dyno::DataType3f>>();
+		//auto colorMapper = std::make_shared<dyno::ColorMapping<dyno::DataType3f>>();
+		//colorMapper->varMax()->setValue(5.0f);
 
-		fluid->graphicsPipeline()->pushModule(ptRender);
+		//fluid->currentVelocity()->connect(calculateNorm->inVec());
+		//calculateNorm->outNorm()->connect(colorMapper->inScalar());
 
+		//fluid->graphicsPipeline()->pushModule(calculateNorm);
+		//fluid->graphicsPipeline()->pushModule(colorMapper);
 
+		//auto ptRender = std::make_shared<dyno::GLPointVisualModule>();
+		//ptRender->setColor(dyno::Vec3f(1, 0, 0));
+		//ptRender->setColorMapMode(dyno::GLPointVisualModule::PER_VERTEX_SHADER);
+		//ptRender->setColorMapRange(0, 5);
+
+		//fluid->currentTopology()->connect(ptRender->inPointSet());
+		//colorMapper->outColor()->connect(ptRender->inColor());
+		//fluid->graphicsPipeline()->pushModule(ptRender);
+		
 		mSceneGraph->initialize();
-//		mSceneGraph->updateGraphicsContext();
 	}
 }
 
@@ -139,12 +155,12 @@ void WSimulationCanvas::onMouseWheeled(const Wt::WMouseEvent& evt)
 void WSimulationCanvas::paintGL()
 {
 	mSceneGraph->updateGraphicsContext();
-	mRenderEngine->draw(mSceneGraph.get());
+	mRenderEngine->draw(mSceneGraph);
 
 	finish();
 }
 
-void WSimulationCanvas::setSceneGraph(std::shared_ptr<dyno::SceneGraph> scene)
+void WSimulationCanvas::setSceneGraph(dyno::SceneGraph* scene)
 {
 	this->mSceneGraph = scene;
 	// reset camera and paint

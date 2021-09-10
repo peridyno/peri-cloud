@@ -46,25 +46,28 @@ WPythonWidget::WPythonWidget()
 
 	// some default code here...
 	std::string source = R"====(# dyno sample
-import PyPhysIKA as pk
+import PyPeridyno as pd
 
 # create body...
-body= pk.ParticleElasticBody3f()
-body.load_particles('data/bunny_points.obj')
+bunny = pd.ParticleElasticBody3f()
+bunny.load_particles('data/bunny_points.obj')
+bunny.load_surface('data/bunny_mesh.obj')
+
 # simple translate
-trans1 = pk.Vector3f([0.5, 0.2, 0.5])
-body.translate(trans1)
-# add visual module
-r1 = pk.PointRenderer()
-r1.set_color(pk.Vector3f([0.4, 0.6, 0.8]))
-body.add_visual_module(r1)
+bunny.translate(pd.Vector3f([0.5, 0.5, 0.5]))
+
+# visual module
+render = pd.GLSurfaceVisualModule()
+render.set_color(pd.Vector3f([1, 1, 0]))
+render.set_node(bunny.get_surface_node())
+
 # create root node...
-root = pk.StaticBoundary3f()
-root.load_cube(pk.Vector3f([0, 0, 0]), pk.Vector3f([1, 1, 1]), 0.005, True, False)
-root.add_particle_system(body)    
-# create scene graph
-scene = pk.SceneGraph()
-scene.set_root_node(root))====";
+root = pd.StaticBoundary3f()
+root.add_particle_system(bunny)    
+
+scene = pd.SceneGraph.get_instance()
+scene.set_root_node(root)
+)====";
 
 	setText(source);
 }
@@ -92,7 +95,7 @@ void WPythonWidget::execute(const std::string& src)
 		auto locals = py::dict();
 		py::exec(src, py::globals(), locals);
 
-		mSceneGraph = locals["scene"].cast<std::shared_ptr<dyno::SceneGraph>>();
+		mSceneGraph = &(locals["scene"].cast<dyno::SceneGraph&>());
 		mSceneGraph->initialize();
 	}
 	catch (const std::exception& e) {

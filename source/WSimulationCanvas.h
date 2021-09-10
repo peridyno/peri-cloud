@@ -23,12 +23,12 @@ public:
 	WSimulationCanvas();
 	~WSimulationCanvas();
 
-	void setSceneGraph(std::shared_ptr<dyno::SceneGraph> scene);
+	void setSceneGraph(dyno::SceneGraph* scene);
 
  	dyno::RenderEngine* getRenderEngine() { return mRenderEngine; };
  	dyno::RenderParams* getRenderParams() { return mRenderEngine->renderParams(); };
 
-	std::shared_ptr<dyno::SceneGraph> sceneGraph() {
+	dyno::SceneGraph* sceneGraph() {
 		return mSceneGraph;
 	}
 
@@ -45,7 +45,7 @@ private:
 
 private:
 	// scene data
-	std::shared_ptr<dyno::SceneGraph>	mSceneGraph;
+	dyno::SceneGraph*	mSceneGraph = NULL;
 
 	dyno::GLRenderEngine* mRenderEngine;
 

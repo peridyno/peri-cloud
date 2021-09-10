@@ -18,12 +18,11 @@ public:
 	void execute(const std::string& src);
 
 	Wt::Signal<>& update() { return mUpdateSignal; }
-	std::shared_ptr<dyno::SceneGraph> getSceneGraph() { return mSceneGraph; }
+	dyno::SceneGraph* getSceneGraph() { return mSceneGraph; }
 
 private:
-	Wt::Signal<>							mUpdateSignal;
-	std::shared_ptr<dyno::SceneGraph>	mSceneGraph;
-
+	Wt::Signal<>						mUpdateSignal;
+	dyno::SceneGraph*					mSceneGraph;
 	Wt::WText*							mCodeEditor;
 
 };

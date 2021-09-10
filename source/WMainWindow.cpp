@@ -205,7 +205,7 @@ void WMainWindow::step()
 	std::cout << "Step!!!" << std::endl;
 }
 
-void WMainWindow::setSceneGraph(std::shared_ptr<dyno::SceneGraph> scene)
+void WMainWindow::setSceneGraph(dyno::SceneGraph* scene)
 {
 	// try to stop the simulation
 	stop();

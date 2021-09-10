@@ -7,7 +7,7 @@ WNodeDataModel::WNodeDataModel()
 	
 }
 
-void WNodeDataModel::setScene(std::shared_ptr<dyno::SceneGraph> scene)
+void WNodeDataModel::setScene(dyno::SceneGraph* scene)
 {
 	mSceneGraph = scene;
 
