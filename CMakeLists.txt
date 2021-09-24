@@ -21,7 +21,6 @@ file(COPY "docroot" DESTINATION ${CMAKE_BINARY_DIR})
 
 # for python binding
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/pybind11 pybind11)
-add_subdirectory(python)
 
 # add sources
 add_subdirectory(source)
