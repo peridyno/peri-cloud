@@ -24,7 +24,7 @@ private:
 	void stop();
 	void step();
 
-	void setSceneGraph(dyno::SceneGraph* scene);
+	void setScene(std::shared_ptr<dyno::SceneGraph> scene);
 
 private:
 
@@ -36,7 +36,7 @@ private:
 
 	bool				bRunFlag;
 
-	dyno::SceneGraph* mSceneGraph;
+	std::shared_ptr<dyno::SceneGraph>	mScene;
 };
 
 

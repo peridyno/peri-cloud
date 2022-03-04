@@ -20,7 +20,19 @@
 #include <Wt/WText.h>
 
 #include <fstream>
+
 #include <SceneGraph.h>
+
+// for test data
+#include <ParticleSystem/ParticleFluid.h>
+#include <ParticleSystem/StaticBoundary.h>
+#include <ParticleSystem/ParticleEmitterSquare.h>
+
+#include <Module/CalculateNorm.h>
+
+#include <GLRenderEngine.h>
+#include <GLPointVisualModule.h>
+#include <ColorMapping.h>
 
 WMainWindow::WMainWindow()
 	: WContainerWidget(), bRunFlag(false)
@@ -31,30 +43,64 @@ WMainWindow::WMainWindow()
 	auto layout = this->setLayout(std::make_unique<Wt::WBorderLayout>());
 	layout->setContentsMargins(0, 0, 0, 0);
 
-	auto centralWidget = layout->addWidget(std::make_unique<WContainerWidget>(), Wt::LayoutPosition::Center);
-	auto layout0 = centralWidget->setLayout(std::make_unique<Wt::WHBoxLayout>());
-	layout0->setContentsMargins(0, 0, 0, 0);
-
-	auto layout1 = layout0->addLayout(std::make_unique<Wt::WVBoxLayout>());
-	auto layout2 = layout0->addLayout(std::make_unique<Wt::WBorderLayout>(), 1);
-	auto layout3 = layout0->addLayout(std::make_unique<Wt::WVBoxLayout>(), 0);
-	layout0->setResizable(0, true, 320);
-
-	auto widget0 = layout1->addWidget(std::make_unique<Wt::WContainerWidget>());
-	auto widget1 = layout3->addWidget(std::make_unique<Wt::WStackedWidget>());
-	mSceneCanvas = layout2->addWidget(std::make_unique<WSimulationCanvas>(), Wt::LayoutPosition::Center);
-
 	//create a navigation bar
 	auto naviBar = layout->addWidget(std::make_unique<Wt::WNavigationBar>(), Wt::LayoutPosition::North);
 	naviBar->addStyleClass("main-nav");
 	naviBar->setTitle("PeriDyno", "https://github.com/peridyno/peridyno");
 	naviBar->setMargin(0);
 
-	// menu
-	auto menu = naviBar->addMenu(std::make_unique<Wt::WMenu>(widget1), Wt::AlignmentFlag::Right);
+	// central canvas
+	mSceneCanvas = layout->addWidget(std::make_unique<WSimulationCanvas>(), Wt::LayoutPosition::Center);
 
-	initMenu(menu);
+	// scene info panel
+	auto widget0 = layout->addWidget(std::make_unique<Wt::WContainerWidget>(), Wt::LayoutPosition::West);
 	initLeftPanel(widget0);
+
+	// menu
+	auto widget1 = layout->addWidget(std::make_unique<Wt::WStackedWidget>(), Wt::LayoutPosition::East);
+	auto menu = naviBar->addMenu(std::make_unique<Wt::WMenu>(widget1), Wt::AlignmentFlag::Right);
+	initMenu(menu);
+
+	// load test data...
+	if (1)
+	{
+		std::shared_ptr<dyno::SceneGraph> scn = std::make_shared<dyno::SceneGraph>();
+
+		//Create a particle emitter
+		auto emitter = scn->addNode(std::make_shared<dyno::ParticleEmitterSquare<dyno::DataType3f>>());
+		emitter->varLocation()->setValue(dyno::Vec3f(0.5f));
+
+		//Create a particle-based fluid solver
+		auto fluid = scn->addNode(std::make_shared<dyno::ParticleFluid<dyno::DataType3f>>());
+		fluid->loadParticles(dyno::Vec3f(0.0f), dyno::Vec3f(0.2f), 0.005f);
+		fluid->addParticleEmitter(emitter);
+
+		auto calculateNorm = std::make_shared<dyno::CalculateNorm<dyno::DataType3f>>();
+		auto colorMapper = std::make_shared<dyno::ColorMapping<dyno::DataType3f>>();
+		colorMapper->varMax()->setValue(5.0f);
+
+		auto ptRender = std::make_shared<dyno::GLPointVisualModule>();
+		ptRender->setColor(dyno::Vec3f(1, 0, 0));
+		ptRender->setColorMapMode(dyno::GLPointVisualModule::PER_VERTEX_SHADER);
+		ptRender->setColorMapRange(0, 5);
+		ptRender->setPointSize(0.005f);
+
+		fluid->stateVelocity()->connect(calculateNorm->inVec());
+		fluid->currentTopology()->connect(ptRender->inPointSet());
+		calculateNorm->outNorm()->connect(colorMapper->inScalar());
+		colorMapper->outColor()->connect(ptRender->inColor());
+
+		fluid->graphicsPipeline()->pushModule(calculateNorm);
+		fluid->graphicsPipeline()->pushModule(colorMapper);
+		fluid->graphicsPipeline()->pushModule(ptRender);
+
+		//Create a container
+		auto container = scn->addNode(std::make_shared<dyno::StaticBoundary<dyno::DataType3f>>());
+		container->loadCube(dyno::Vec3f(0.0f), dyno::Vec3f(1.0), 0.02, true);
+		container->addParticleSystem(fluid);
+
+		setScene(scn);
+	}
 }
 
 WMainWindow::~WMainWindow()
@@ -75,11 +121,11 @@ void WMainWindow::initMenu(Wt::WMenu* menu)
 	auto pythonItem = menu->addItem("Python", std::unique_ptr<WPythonWidget>(pythonWidget));
 
 	paramsWidget->valueChanged().connect([=]() {
-		mSceneCanvas->repaintGL(Wt::GLClientSideRenderer::PAINT_GL);
+		mSceneCanvas->update();
 		});
 
 	pythonWidget->update().connect([=]() {
-			setSceneGraph(pythonWidget->getSceneGraph());
+			setScene(pythonWidget->getSceneGraph());
 		});
 
 	sampleWidget->clicked().connect([=](Sample* sample)
@@ -105,7 +151,6 @@ void WMainWindow::initMenu(Wt::WMenu* menu)
 	hide->clicked().connect([=]() {
 		menu->contentsStack()->setCurrentWidget(0);
 	});
-
 }
 
 
@@ -176,7 +221,7 @@ void WMainWindow::initLeftPanel(Wt::WContainerWidget* parent)
 
 void WMainWindow::start()
 {
-	if (mSceneCanvas->sceneGraph())
+	if (mScene)
 	{
 		this->bRunFlag = true;
 		Wt::WApplication* app = Wt::WApplication::instance();
@@ -195,23 +240,23 @@ void WMainWindow::stop()
 
 void WMainWindow::step()
 {
-	if (mSceneCanvas->sceneGraph())
+	if (mScene)
 	{
- 		mSceneCanvas->sceneGraph()->takeOneFrame();
-// 		mSceneCanvas->sceneGraph()->updateGraphicsContext();
-		mSceneCanvas->repaintGL(Wt::GLClientSideRenderer::PAINT_GL);
+		mScene->takeOneFrame();
+		mSceneCanvas->update();
 	}
 
 	std::cout << "Step!!!" << std::endl;
 }
 
-void WMainWindow::setSceneGraph(dyno::SceneGraph* scene)
+void WMainWindow::setScene(std::shared_ptr<dyno::SceneGraph> scene)
 {
 	// try to stop the simulation
 	stop();
+
 	// setup scene graph
-	mSceneGraph = scene;
-	mSceneCanvas->setSceneGraph(mSceneGraph);
-	mNodeDataModel->setScene(mSceneGraph);
-	mModuleDataModel->setNode(0);
+	mScene = scene;
+	mSceneCanvas->setScene(mScene);
+	mNodeDataModel->setScene(mScene);
+	mModuleDataModel->setNode(NULL);
 }

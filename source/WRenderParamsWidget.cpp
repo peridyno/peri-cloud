@@ -26,11 +26,40 @@ WRenderParamsWidget::WRenderParamsWidget(RenderParams* rparams)
 	this->setHeight(Wt::WLength("100%"));
 
 	createLightPanel();
-	createCameraPanel();
+	//createCameraPanel();
 	createRenderPanel();
 
 	mRenderParams = rparams;
 	update();
+
+	// connect signal
+	mAmbientColor->colorInput().connect(this, &WRenderParamsWidget::updateRenderParams);
+	mAmbientScale->valueChanged().connect(this, &WRenderParamsWidget::updateRenderParams);
+	mLightColor->colorInput().connect(this, &WRenderParamsWidget::updateRenderParams);
+	mLightScale->valueChanged().connect(this, &WRenderParamsWidget::updateRenderParams);
+	mLightTheta->valueChanged().connect(this, &WRenderParamsWidget::updateRenderParams);
+	mLightPhi->valueChanged().connect(this, &WRenderParamsWidget::updateRenderParams);
+
+	//mCameraEyeX->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraEyeY->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraEyeZ->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraTargetX->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraTargetY->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraTargetZ->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraUpX->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraUpY->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraUpZ->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraFov->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraAspect->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraClipNear->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mCameraClipFar->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+
+	mSceneBounds->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	mAxisHelper->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	mGroundPlane->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	mGroundScale->valueChanged().connect(this, &WRenderParamsWidget::updateRenderParams);
+	mBackgroudColor0->colorInput().connect(this, &WRenderParamsWidget::updateRenderParams);
+	mBackgroudColor1->colorInput().connect(this, &WRenderParamsWidget::updateRenderParams);
 }
 
 template<class T>
@@ -64,7 +93,7 @@ void WRenderParamsWidget::createLightPanel()
 
 		// ambient light
 		mAmbientColor = addTableRow<Wt::WColorPicker>(table, "Ambient Color");
-		mAmbientScale = addTableRow<Wt::WSlider>(table, "Ambient Scale");
+		mAmbientScale = addTableRow<Wt::WDoubleSpinBox>(table, "Ambient Scale");
 		mAmbientScale->setRange(1, 100);		
 	}	
 
@@ -77,7 +106,7 @@ void WRenderParamsWidget::createLightPanel()
 		table->setMargin(10);
 
 		mLightColor = addTableRow<Wt::WColorPicker>(table, "Light Color");
-		mLightScale = addTableRow<Wt::WSlider>(table, "Light Scale");
+		mLightScale = addTableRow<Wt::WDoubleSpinBox>(table, "Light Scale");
 		mLightScale->setRange(1, 100);
 
 		mLightTheta = addTableRow<Wt::WSlider>(table, "Light Theta");
@@ -89,13 +118,6 @@ void WRenderParamsWidget::createLightPanel()
 	mAmbientColor->setStyleClass("color-picker");
 	mLightColor->setStyleClass("color-picker");
 
-	// connect signal
-	mAmbientColor->colorInput().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mAmbientScale->valueChanged().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mLightColor->colorInput().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mLightScale->valueChanged().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mLightTheta->valueChanged().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mLightPhi->valueChanged().connect(this, &WRenderParamsWidget::updateRenderParams);
 }
 
 void WRenderParamsWidget::createCameraPanel()
@@ -133,19 +155,6 @@ void WRenderParamsWidget::createCameraPanel()
 	// aspect is auto computed from framebuffer sizer
 	mCameraAspect->setEnabled(false);
 
-	mCameraEyeX->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraEyeY->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraEyeZ->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraTargetX->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraTargetY->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraTargetZ->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraUpX->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraUpY->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraUpZ->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraFov->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraAspect->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraClipNear->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mCameraClipFar->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
 }
 
 
@@ -162,14 +171,11 @@ void WRenderParamsWidget::createRenderPanel()
 	mGroundPlane = addTableRow<Wt::WCheckBox>(table, "Ground Plane");
 	mGroundScale = addTableRow<Wt::WSlider>(table, "Ground Scale");
 	mGroundScale->setRange(1, 10);
-	mBackgroudColor = addTableRow<Wt::WColorPicker>(table, "Background");
-	mBackgroudColor->setStyleClass("color-picker");
+	mBackgroudColor0 = addTableRow<Wt::WColorPicker>(table, "Background");
+	mBackgroudColor0->setStyleClass("color-picker");
+	mBackgroudColor1 = addTableRow<Wt::WColorPicker>(table, "Background");
+	mBackgroudColor1->setStyleClass("color-picker");
 
-	mSceneBounds->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mAxisHelper->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mGroundPlane->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mGroundScale->valueChanged().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mBackgroudColor->colorInput().connect(this, &WRenderParamsWidget::updateRenderParams);
 }
 
 Wt::WColor Glm2WColor(glm::vec3 v)
@@ -206,7 +212,7 @@ void WRenderParamsWidget::update()
 	mAmbientScale->setValue(mRenderParams->light.ambientScale);
 	mLightColor->setColor(Glm2WColor(mRenderParams->light.mainLightColor));
 	mLightScale->setValue(mRenderParams->light.mainLightScale);
-	
+	//
 	glm::vec3 dir = glm::normalize(mRenderParams->light.mainLightDirection);
 	glm::vec3 polar = xyz2sphere(dir);
 	mLightTheta->setValue(glm::degrees(polar.x));
@@ -228,12 +234,13 @@ void WRenderParamsWidget::update()
 // 	mCameraClipNear->setValue(mRenderParams->camera.z_min);
 // 	mCameraClipFar->setValue(mRenderParams->camera.z_max);
 
-// 	// render
-// 	mSceneBounds->setChecked(mRenderParams->showSceneBounds);
-// 	mAxisHelper->setChecked(mRenderParams->showAxisHelper);
-// 	mGroundPlane->setChecked(mRenderParams->showGround);
-// 	mGroundScale->setValue(mRenderParams->groudScale);
-// 	mBackgroudColor->setColor(Glm2WColor(mRenderParams->bgColor));
+ 	// render
+ 	mSceneBounds->setChecked(mRenderParams->showSceneBounds);
+ 	mAxisHelper->setChecked(mRenderParams->showAxisHelper);
+ 	mGroundPlane->setChecked(mRenderParams->showGround);
+ 	mGroundScale->setValue(mRenderParams->groudScale);
+ 	mBackgroudColor0->setColor(Glm2WColor(mRenderParams->bgColor0));
+	mBackgroudColor1->setColor(Glm2WColor(mRenderParams->bgColor1));
 }
 
 void WRenderParamsWidget::updateRenderParams()
@@ -243,7 +250,6 @@ void WRenderParamsWidget::updateRenderParams()
 
 	mRenderParams->light.mainLightColor = WColor2Glm(mLightColor->color());
 	mRenderParams->light.mainLightScale = mLightScale->value();
-	std::cout << mLightScale->value() << std::endl;
 
 	glm::vec2 polar = glm::radians(glm::vec2(mLightTheta->value(), mLightPhi->value()));
 	mRenderParams->light.mainLightDirection = sphere2xyz(glm::vec3(polar, 1));
@@ -265,12 +271,12 @@ void WRenderParamsWidget::updateRenderParams()
 // 	mRenderParams->camera.z_min = mCameraClipNear->value();
 // 	mRenderParams->camera.z_max = mCameraClipFar->value();
 // 
-// 	mRenderParams->showSceneBounds = mSceneBounds->isChecked();
-// 	mRenderParams->showAxisHelper = mAxisHelper->isChecked();
-// 	mRenderParams->showGround = mGroundPlane->isChecked();
-// 	mRenderParams->groudScale = mGroundScale->value();
-// 	mRenderParams->bgColor = WColor2Glm(mBackgroudColor->color());
+ 	mRenderParams->showSceneBounds = mSceneBounds->isChecked();
+ 	mRenderParams->showAxisHelper = mAxisHelper->isChecked();
+ 	mRenderParams->showGround = mGroundPlane->isChecked();
+ 	mRenderParams->groudScale = mGroundScale->value();
+ 	mRenderParams->bgColor0 = WColor2Glm(mBackgroudColor0->color());
+	mRenderParams->bgColor1 = WColor2Glm(mBackgroudColor1->color());
 
 	mSignal.emit();
-
 }

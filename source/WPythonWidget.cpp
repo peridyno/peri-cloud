@@ -95,8 +95,8 @@ void WPythonWidget::execute(const std::string& src)
 		auto locals = py::dict();
 		py::exec(src, py::globals(), locals);
 
-		mSceneGraph = &(locals["scene"].cast<dyno::SceneGraph&>());
-		mSceneGraph->initialize();
+		mScene = locals["scene"].cast<std::shared_ptr<dyno::SceneGraph>>();
+		mScene->initialize();
 	}
 	catch (const std::exception& e) {
 		Wt::WMessageBox::show("Error", e.what(), Wt::StandardButton::Ok);

@@ -7,9 +7,9 @@ WNodeDataModel::WNodeDataModel()
 	
 }
 
-void WNodeDataModel::setScene(dyno::SceneGraph* scene)
+void WNodeDataModel::setScene(std::shared_ptr<dyno::SceneGraph> scene)
 {
-	mSceneGraph = scene;
+	mScene = scene;
 
 	layoutAboutToBeChanged().emit();
 
@@ -17,69 +17,31 @@ void WNodeDataModel::setScene(dyno::SceneGraph* scene)
 		delete item;
 	mNodeList.clear();
 
-	if (scene)
+	for (auto node = scene->begin(); node != scene->end(); node++)
 	{
-		recursiveBuild(scene->getRootNode());
+		NodeItem* item = new NodeItem;
+		item->id = mNodeList.size();
+		item->ref = node.get();
+		item->parent = 0;
+		mNodeList.push_back(item);
 	}
 
 	layoutChanged().emit();
 }
 
-WNodeDataModel::NodeItem* WNodeDataModel::recursiveBuild(std::shared_ptr<dyno::Node> node)
-{
-	if (!node)
-		return 0;
-
-	NodeItem* item = new NodeItem;
-	item->id = mNodeList.size();
-	item->ref = node;
-	item->parent = 0;
-	mNodeList.push_back(item);
-
-	for (auto child : node->getAncestors())
-	{
-		NodeItem* n = recursiveBuild(child);
-		n->parent = item;
-		n->offset = item->children.size();
-		item->children.push_back(n);
-	}
-
-	return item;
-}
-
 
 Wt::WModelIndex WNodeDataModel::parent(const Wt::WModelIndex & index) const
 {
-	if (index.isValid() && index.internalId() > 0)
-	{
-		unsigned int idx = index.internalId();
-		NodeItem* item = mNodeList[idx];
-		NodeItem* parent = item->parent;
-		if (item->parent != 0)
-		{
-			return createIndex(item->parent->offset, 0, item->parent->id);
-		}
-	}
-	return Wt::WModelIndex(); 
+	return Wt::WModelIndex();
 }
 
 Wt::WModelIndex WNodeDataModel::index(int row, int column, const Wt::WModelIndex & parent) const
 {
-	unsigned int id = 0;
 	if (parent.isValid())
 	{
-		unsigned int idx = parent.internalId();
-		NodeItem* item = mNodeList[idx];
-		NodeItem* curr = item->children[row];
-		id = curr->id;
-	}
-	else
-	{
-		NodeItem* item = mNodeList[0];
-		NodeItem* curr = item->children[row];
-		id = curr->id;
-	}
-	return createIndex(row, column, id);
+		return Wt::WModelIndex();
+	}	
+	return createIndex(row, column, row);
 }
 
 int WNodeDataModel::columnCount(const Wt::WModelIndex & parent) const
@@ -89,17 +51,9 @@ int WNodeDataModel::columnCount(const Wt::WModelIndex & parent) const
 
 int WNodeDataModel::rowCount(const Wt::WModelIndex & parent) const
 {
-	unsigned int idx = 0;
 	if (parent.isValid())
-	{
-		idx = parent.internalId();
-	}
-	if (idx < mNodeList.size())
-	{
-		NodeItem* item = mNodeList[idx];
-		return item->children.size();
-	}
-	return 0;
+		return 0;
+	return mNodeList.size();
 }
 
 Wt::cpp17::any WNodeDataModel::data(const Wt::WModelIndex & index, Wt::ItemDataRole role) const

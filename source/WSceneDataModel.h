@@ -15,7 +15,7 @@ class WNodeDataModel : public Wt::WAbstractItemModel
 public:
 	WNodeDataModel();
 
-	void setScene(dyno::SceneGraph* scene);
+	void setScene(std::shared_ptr<dyno::SceneGraph> scene);
 
 	virtual Wt::WModelIndex parent(const Wt::WModelIndex& index) const;
 	virtual Wt::WModelIndex index(int row, int column,
@@ -34,7 +34,7 @@ public:
 	std::shared_ptr<dyno::Node> getNode(const Wt::WModelIndex& index);
 
 private:
-	dyno::SceneGraph* mSceneGraph;
+	std::shared_ptr<dyno::SceneGraph> mScene;
 
 	struct NodeItem
 	{
@@ -48,8 +48,6 @@ private:
 	};
 
 	std::vector<NodeItem*> mNodeList;
-
-	NodeItem* recursiveBuild(std::shared_ptr<dyno::Node> node);
 };
 
 

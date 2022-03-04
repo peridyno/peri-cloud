@@ -30,11 +30,11 @@ private:
 
 	// ambient illumination
 	Wt::WColorPicker*	mAmbientColor;
-	Wt::WSlider*		mAmbientScale;
+	Wt::WDoubleSpinBox*	mAmbientScale;
 
 	// main directional color
-	Wt::WColorPicker* mLightColor;
-	Wt::WSlider*		mLightScale;
+	Wt::WColorPicker*   mLightColor;
+	Wt::WDoubleSpinBox*	mLightScale;
 	Wt::WSlider*		mLightTheta;
 	Wt::WSlider*		mLightPhi;
 
@@ -61,5 +61,6 @@ private:
 	Wt::WCheckBox*		mAxisHelper;
 	Wt::WCheckBox*		mGroundPlane;
 	Wt::WSlider*		mGroundScale;
-	Wt::WColorPicker*	mBackgroudColor;
+	Wt::WColorPicker*	mBackgroudColor0;
+	Wt::WColorPicker*	mBackgroudColor1;
 };

@@ -1,57 +1,66 @@
 #pragma once
 
-#include <Wt/WGLWidget.h>
+#include <Wt/WContainerWidget.h>
 
-#include "WPredefs.h"
+#include <memory>
 
 namespace dyno
 {
 	class SceneGraph; 
-	class RenderEngine;
-	class RenderTarget;
+	class GLRenderEngine;
+	class GLRenderTarget;
+
 	struct RenderParams;
 };
 
-#include <memory>
+struct GLFWwindow;
+class ImageEncoder;
 
-#include "GLRenderEngine.h"
-#include "Camera.h"
-
-class WSimulationCanvas : public Wt::WGLWidget
+class WSimulationCanvas : public Wt::WContainerWidget
 {
 public:
 	WSimulationCanvas();
 	~WSimulationCanvas();
 
-	void setSceneGraph(dyno::SceneGraph* scene);
+	void setScene(std::shared_ptr<dyno::SceneGraph> scene);
 
- 	dyno::RenderEngine* getRenderEngine() { return mRenderEngine; };
- 	dyno::RenderParams* getRenderParams() { return mRenderEngine->renderParams(); };
-
-	dyno::SceneGraph* sceneGraph() {
-		return mSceneGraph;
-	}
+	dyno::RenderParams* getRenderParams();
+	
+	void update();
 
 protected:
-	void initializeGL() override;
-	void paintGL() override;
-	void resizeGL(int width, int height) override;
+	void initializeGL();
+	void makeCurrent();
+	void doneCurrent();
+
+	void render(Wt::WFlags<Wt::RenderFlag> flags) override;
+	void layoutSizeChanged(int width, int height) override;
 
 private:
 	void onMousePressed(const Wt::WMouseEvent& evt);
-	void onMouseMoved(const Wt::WMouseEvent& evt);
+	void onMouseDrag(const Wt::WMouseEvent& evt);
 	void onMouseReleased(const Wt::WMouseEvent& evt);
 	void onMouseWheeled(const Wt::WMouseEvent& evt);
 
 private:
-	// scene data
-	dyno::SceneGraph*	mSceneGraph = NULL;
+	Wt::WImage* mImage;
+	Wt::WApplication* mApp;
 
+	GLFWwindow* mContext;
 	dyno::GLRenderEngine* mRenderEngine;
+	dyno::GLRenderTarget* mRenderTarget;
 
-	// A client-side JavaScript matrix for model transform
-	JavaScriptMatrix4x4		mClientTransform;
+	// raw image
+	std::vector<unsigned char> mImageData;
 
-	WButtonState mButtonState = WButtonState::WT_BUTTON_UP;
-	Wt::MouseButton mButtonType = Wt::MouseButton::None;
+	// jpeg encoder
+	std::unique_ptr<ImageEncoder> mJpegEncoder;
+	// jpeg data
+	std::vector<unsigned char> mJpegBuffer;
+	// Wt resource for jpeg image
+	std::unique_ptr<Wt::WMemoryResource> mJpegResource;
+
+	// scene data
+	std::shared_ptr<dyno::SceneGraph> mScene;
+
 };
