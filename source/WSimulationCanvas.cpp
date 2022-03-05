@@ -91,9 +91,6 @@ WSimulationCanvas::WSimulationCanvas()
 
 	// initialize OpenGL context and RenderEngine
 	this->initializeGL();
-	
-	// hack... hard code the camera pose
-	mRenderEngine->camera()->rotateToPoint(0.3, 0.1);
 }
 
 WSimulationCanvas::~WSimulationCanvas()
@@ -124,13 +121,11 @@ void WSimulationCanvas::initializeGL()
 
 	makeCurrent();
 
-	mRenderEngine->initialize(1, 1);
+	mRenderEngine->initialize(640, 480);
 	mRenderTarget->initialize();
 
 	// initialize size
-	mRenderEngine->resize(1, 1);
-	mRenderTarget->resize(1, 1);
-	mImageData.resize(1 * 3);
+	mImageData.resize(640 * 480 * 3);
 
 	doneCurrent();
 
