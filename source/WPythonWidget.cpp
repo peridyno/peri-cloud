@@ -46,27 +46,40 @@ WPythonWidget::WPythonWidget()
 
 	// some default code here...
 	std::string source = R"====(# dyno sample
-import PyPeridyno as pd
+import PyPeridyno as dyno
 
-# create body...
-bunny = pd.ParticleElasticBody3f()
-bunny.load_particles('data/bunny_points.obj')
-bunny.load_surface('data/bunny_mesh.obj')
+scene = dyno.SceneGraph()
 
-# simple translate
-bunny.translate(pd.Vector3f([0.5, 0.5, 0.5]))
+emitter = dyno.ParticleEmitterSquare3f()
+emitter.var_location().set_value(dyno.Vector3f([0.5, 0.5, 0.5]))
+scene.add_node(emitter)
 
-# visual module
-render = pd.GLSurfaceVisualModule()
-render.set_color(pd.Vector3f([1, 1, 0]))
-render.set_node(bunny.get_surface_node())
+fluid = dyno.ParticleFluid3f()
+fluid.load_particles(dyno.Vector3f([0, 0, 0]), dyno.Vector3f([0.2, 0.2, 0.2]), 0.005)
+scene.add_node(fluid)
 
-# create root node...
-root = pd.StaticBoundary3f()
-root.add_particle_system(bunny)    
+boundary = dyno.StaticBoundary3f()
+boundary.load_cube(dyno.Vector3f([0, 0, 0]), dyno.Vector3f([1.0, 1.0, 1.0]), 0.02, True)
+scene.add_node(boundary)
 
-scene = pd.SceneGraph.get_instance()
-scene.set_root_node(root)
+calcNorm = dyno.CalculateNorm3f()
+colorMapper = dyno.ColorMapping3f()
+pointRender = dyno.GLPointVisualModule3f()
+
+fluid.state_velocity().connect(calcNorm.in_vec())
+
+calcNorm.out_norm().connect(colorMapper.in_scalar())
+
+fluid.current_topology().connect(pointRender.in_pointset())
+colorMapper.out_color().connect(pointRender.in_color())
+
+fluid.graphics_pipeline().push_module(calcNorm)
+fluid.graphics_pipeline().push_module(colorMapper)
+fluid.graphics_pipeline().push_module(pointRender)
+
+emitter.connect(fluid.import_particles_emitters())
+fluid.connect(boundary.import_particle_systems())
+
 )====";
 
 	setText(source);
@@ -95,16 +108,14 @@ void WPythonWidget::execute(const std::string& src)
 		auto locals = py::dict();
 		py::exec(src, py::globals(), locals);
 
-		mScene = locals["scene"].cast<std::shared_ptr<dyno::SceneGraph>>();
-		mScene->initialize();
+		auto scene = locals["scene"].cast<std::shared_ptr<dyno::SceneGraph>>();
+		//mScene->initialize();
+
+		if(scene) mSignal.emit(scene);
 	}
 	catch (const std::exception& e) {
 		Wt::WMessageBox::show("Error", e.what(), Wt::StandardButton::Ok);
 		flag = false;
 	}
 
-	if (flag)
-	{
-		mUpdateSignal.emit();
-	}
 }

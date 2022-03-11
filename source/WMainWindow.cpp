@@ -62,7 +62,7 @@ WMainWindow::WMainWindow()
 	initMenu(menu);
 
 	// load test data...
-	if (1)
+	if (0)
 	{
 		std::shared_ptr<dyno::SceneGraph> scn = std::make_shared<dyno::SceneGraph>();
 
@@ -124,8 +124,8 @@ void WMainWindow::initMenu(Wt::WMenu* menu)
 		mSceneCanvas->update();
 		});
 
-	pythonWidget->update().connect([=]() {
-			setScene(pythonWidget->getSceneGraph());
+	pythonWidget->updateSceneGraph().connect([=](std::shared_ptr<dyno::SceneGraph> scene) {
+			if(scene) setScene(scene);
 		});
 
 	sampleWidget->clicked().connect([=](Sample* sample)

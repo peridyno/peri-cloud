@@ -17,12 +17,12 @@ public:
 	void setText(const std::string& text);
 	void execute(const std::string& src);
 
-	Wt::Signal<>& update() { return mUpdateSignal; }
-	std::shared_ptr<dyno::SceneGraph> getSceneGraph() { return mScene; }
+
+	Wt::Signal<std::shared_ptr<dyno::SceneGraph>>& updateSceneGraph() { return mSignal; }
 
 private:
-	Wt::Signal<>						mUpdateSignal;
-	std::shared_ptr<dyno::SceneGraph>	mScene;
-	Wt::WText*							mCodeEditor;
+	Wt::WText* mCodeEditor;
+
+	Wt::Signal<std::shared_ptr<dyno::SceneGraph>> mSignal;
 
 };

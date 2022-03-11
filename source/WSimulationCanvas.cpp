@@ -195,8 +195,12 @@ void WSimulationCanvas::update()
 	// do render
 	{
 		this->makeCurrent();
-		mScene->updateGraphicsContext();
 		mRenderTarget->bind();
+
+		if (mScene)
+		{
+			mScene->updateGraphicsContext();
+		}
 		mRenderEngine->draw(mScene.get());
 
 		// dump framebuffer
@@ -227,11 +231,15 @@ void WSimulationCanvas::setScene(std::shared_ptr<dyno::SceneGraph> scene)
 	this->mScene = scene;
 
 	// TODO: move to somewhere else!
-	makeCurrent();
-	this->mScene->initialize();
-	doneCurrent();
-	
-	scheduleRender();
+	if (this->mScene)
+	{
+		makeCurrent();
+		this->mScene->initialize();
+		doneCurrent();
+
+		scheduleRender();
+	}
+
 }
 
 dyno::RenderParams* WSimulationCanvas::getRenderParams()

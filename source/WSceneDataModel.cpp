@@ -17,15 +17,17 @@ void WNodeDataModel::setScene(std::shared_ptr<dyno::SceneGraph> scene)
 		delete item;
 	mNodeList.clear();
 
-	for (auto node = scene->begin(); node != scene->end(); node++)
+	if (mScene)
 	{
-		NodeItem* item = new NodeItem;
-		item->id = mNodeList.size();
-		item->ref = node.get();
-		item->parent = 0;
-		mNodeList.push_back(item);
+		for (auto node = scene->begin(); node != scene->end(); node++)
+		{
+			NodeItem* item = new NodeItem;
+			item->id = mNodeList.size();
+			item->ref = node.get();
+			item->parent = 0;
+			mNodeList.push_back(item);
+		}
 	}
-
 	layoutChanged().emit();
 }
 
