@@ -83,10 +83,10 @@ WMainWindow::WMainWindow()
 		ptRender->setColor(dyno::Vec3f(1, 0, 0));
 		ptRender->setColorMapMode(dyno::GLPointVisualModule::PER_VERTEX_SHADER);
 		ptRender->setColorMapRange(0, 5);
-		ptRender->setPointSize(0.005f);
+		//ptRender->setPointSize(0.005f);
 
 		fluid->stateVelocity()->connect(calculateNorm->inVec());
-		fluid->currentTopology()->connect(ptRender->inPointSet());
+		//fluid->currentTopology()->connect(ptRender->inPointSet());
 		calculateNorm->outNorm()->connect(colorMapper->inScalar());
 		colorMapper->outColor()->connect(ptRender->inColor());
 

@@ -46,6 +46,7 @@ WPythonWidget::WPythonWidget()
 
 	// some default code here...
 	std::string source = R"====(# dyno sample
+# dyno sample
 import PyPeridyno as dyno
 
 scene = dyno.SceneGraph()
@@ -64,13 +65,16 @@ scene.add_node(boundary)
 
 calcNorm = dyno.CalculateNorm3f()
 colorMapper = dyno.ColorMapping3f()
+colorMapper.var_max().set_value(5.0);
 pointRender = dyno.GLPointVisualModule3f()
+pointRender.set_colorMapRange(0, 5)
+pointRender.set_colorMapMode(dyno.GLPointVisualModule3f.ColorMapMode.PER_VERTEX_SHADER)
 
 fluid.state_velocity().connect(calcNorm.in_vec())
 
 calcNorm.out_norm().connect(colorMapper.in_scalar())
 
-fluid.current_topology().connect(pointRender.in_pointset())
+fluid.current_topology().connect(pointRender.in_pointSet())
 colorMapper.out_color().connect(pointRender.in_color())
 
 fluid.graphics_pipeline().push_module(calcNorm)

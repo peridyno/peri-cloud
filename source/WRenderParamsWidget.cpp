@@ -238,7 +238,7 @@ void WRenderParamsWidget::update()
  	mSceneBounds->setChecked(mRenderParams->showSceneBounds);
  	mAxisHelper->setChecked(mRenderParams->showAxisHelper);
  	mGroundPlane->setChecked(mRenderParams->showGround);
- 	mGroundScale->setValue(mRenderParams->groudScale);
+ 	mGroundScale->setValue(mRenderParams->planeScale);
  	mBackgroudColor0->setColor(Glm2WColor(mRenderParams->bgColor0));
 	mBackgroudColor1->setColor(Glm2WColor(mRenderParams->bgColor1));
 }
@@ -274,7 +274,7 @@ void WRenderParamsWidget::updateRenderParams()
  	mRenderParams->showSceneBounds = mSceneBounds->isChecked();
  	mRenderParams->showAxisHelper = mAxisHelper->isChecked();
  	mRenderParams->showGround = mGroundPlane->isChecked();
- 	mRenderParams->groudScale = mGroundScale->value();
+ 	mRenderParams->planeScale = mGroundScale->value();
  	mRenderParams->bgColor0 = WColor2Glm(mBackgroudColor0->color());
 	mRenderParams->bgColor1 = WColor2Glm(mBackgroudColor1->color());
 
