@@ -51,7 +51,7 @@ import PyPeridyno as dyno
 
 scene = dyno.SceneGraph()
 
-emitter = dyno.ParticleEmitterSquare3f()
+emitter = dyno.SquareEmitter3f()
 emitter.var_location().set_value(dyno.Vector3f([0.5, 0.5, 0.5]))
 scene.add_node(emitter)
 
@@ -74,7 +74,7 @@ fluid.state_velocity().connect(calcNorm.in_vec())
 
 calcNorm.out_norm().connect(colorMapper.in_scalar())
 
-fluid.current_topology().connect(pointRender.in_pointSet())
+fluid.state_point_set().connect(pointRender.in_pointSet())
 colorMapper.out_color().connect(pointRender.in_color())
 
 fluid.graphics_pipeline().push_module(calcNorm)
