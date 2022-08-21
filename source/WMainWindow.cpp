@@ -26,7 +26,7 @@
 // for test data
 #include <ParticleSystem/ParticleFluid.h>
 #include <ParticleSystem/StaticBoundary.h>
-#include <ParticleSystem/ParticleEmitterSquare.h>
+#include <ParticleSystem/SquareEmitter.h>
 
 #include <Module/CalculateNorm.h>
 
@@ -67,7 +67,7 @@ WMainWindow::WMainWindow()
 		std::shared_ptr<dyno::SceneGraph> scn = std::make_shared<dyno::SceneGraph>();
 
 		//Create a particle emitter
-		auto emitter = scn->addNode(std::make_shared<dyno::ParticleEmitterSquare<dyno::DataType3f>>());
+		auto emitter = scn->addNode(std::make_shared<dyno::SquareEmitter<dyno::DataType3f>>());
 		emitter->varLocation()->setValue(dyno::Vec3f(0.5f));
 
 		//Create a particle-based fluid solver
