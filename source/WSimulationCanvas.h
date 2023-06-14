@@ -4,11 +4,15 @@
 
 #include <memory>
 
+#include <Rendering/Engine/OpenGL/gl/Framebuffer.h>
+#include <Rendering/Engine/OpenGL/gl/Texture.h>
+
+
 namespace dyno
 {
+	class Camera;
 	class SceneGraph; 
 	class GLRenderEngine;
-	class GLRenderTarget;
 
 	struct RenderParams;
 };
@@ -43,24 +47,22 @@ private:
 	void onMouseWheeled(const Wt::WMouseEvent& evt);
 
 private:
-	Wt::WImage* mImage;
-	Wt::WApplication* mApp;
+	Wt::WImage*				mImage;
+	Wt::WApplication*		mApp;
 
-	GLFWwindow* mContext;
-	dyno::GLRenderEngine* mRenderEngine;
-	dyno::GLRenderTarget* mRenderTarget;
+	GLFWwindow*				mContext;
+	dyno::GLRenderEngine*	mRenderEngine;
+	dyno::RenderParams*		mRenderParams;
+	
+	std::vector<unsigned char> mImageData;					// raw image	
+	std::vector<unsigned char> mJpegBuffer;					// jpeg data	
+	std::unique_ptr<ImageEncoder> mJpegEncoder;				// jpeg encoder	
+	std::unique_ptr<Wt::WMemoryResource> mJpegResource;		// Wt resource for jpeg image
 
-	// raw image
-	std::vector<unsigned char> mImageData;
+	std::shared_ptr<dyno::SceneGraph> mScene;	
+	std::shared_ptr<dyno::Camera>	  mCamera;
 
-	// jpeg encoder
-	std::unique_ptr<ImageEncoder> mJpegEncoder;
-	// jpeg data
-	std::vector<unsigned char> mJpegBuffer;
-	// Wt resource for jpeg image
-	std::unique_ptr<Wt::WMemoryResource> mJpegResource;
-
-	// scene data
-	std::shared_ptr<dyno::SceneGraph> mScene;
-
+	// internal framebuffer
+	gl::Framebuffer framebuffer;
+	gl::Texture2D	frameColor;
 };

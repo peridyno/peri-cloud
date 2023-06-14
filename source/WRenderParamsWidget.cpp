@@ -1,8 +1,6 @@
 #include "WRenderParamsWidget.h"
 #include "WSimulationCanvas.h"
 
-#include <Rendering.h>
-
 #include <Wt/WPushButton.h>
 #include <Wt/WPanel.h>
 #include <Wt/WColorPicker.h>
@@ -16,6 +14,8 @@
 #include <Wt/WBorderLayout.h>
 #include <Wt/WSlider.h>
 #include <Wt/WText.h>
+
+#include <GLRenderEngine.h>
 
 using namespace dyno;
 
@@ -55,7 +55,7 @@ WRenderParamsWidget::WRenderParamsWidget(RenderParams* rparams)
 	//mCameraClipFar->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
 
 	mSceneBounds->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
-	mAxisHelper->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
+	//mAxisHelper->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
 	mGroundPlane->changed().connect(this, &WRenderParamsWidget::updateRenderParams);
 	mGroundScale->valueChanged().connect(this, &WRenderParamsWidget::updateRenderParams);
 	mBackgroudColor0->colorInput().connect(this, &WRenderParamsWidget::updateRenderParams);
@@ -167,7 +167,7 @@ void WRenderParamsWidget::createRenderPanel()
 	table->setMargin(10);
 
 	mSceneBounds = addTableRow<Wt::WCheckBox>(table, "Scene Bound");
-	mAxisHelper = addTableRow<Wt::WCheckBox>(table, "Axis Helper");
+	//mAxisHelper = addTableRow<Wt::WCheckBox>(table, "Axis Helper");
 	mGroundPlane = addTableRow<Wt::WCheckBox>(table, "Ground Plane");
 	mGroundScale = addTableRow<Wt::WSlider>(table, "Ground Scale");
 	mGroundScale->setRange(1, 10);
@@ -236,7 +236,7 @@ void WRenderParamsWidget::update()
 
  	// render
  	mSceneBounds->setChecked(mRenderParams->showSceneBounds);
- 	mAxisHelper->setChecked(mRenderParams->showAxisHelper);
+ 	//mAxisHelper->setChecked(mRenderParams->showAxisHelper);
  	mGroundPlane->setChecked(mRenderParams->showGround);
  	mGroundScale->setValue(mRenderParams->planeScale);
  	mBackgroudColor0->setColor(Glm2WColor(mRenderParams->bgColor0));
@@ -272,7 +272,7 @@ void WRenderParamsWidget::updateRenderParams()
 // 	mRenderParams->camera.z_max = mCameraClipFar->value();
 // 
  	mRenderParams->showSceneBounds = mSceneBounds->isChecked();
- 	mRenderParams->showAxisHelper = mAxisHelper->isChecked();
+ 	//mRenderParams->showAxisHelper = mAxisHelper->isChecked();
  	mRenderParams->showGround = mGroundPlane->isChecked();
  	mRenderParams->planeScale = mGroundScale->value();
  	mRenderParams->bgColor0 = WColor2Glm(mBackgroudColor0->color());

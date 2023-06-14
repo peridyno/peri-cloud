@@ -9,14 +9,14 @@
 #include <Module/CalculateNorm.h>
 #include <ColorMapping.h>
 
+#include <GLFW/glfw3.h>
+
 #include <GLRenderEngine.h>
-#include <GLRenderTarget.h>
 #include <GLPointVisualModule.h>
 #include <GLSurfaceVisualModule.h>
 
-#include <Camera.h>
-
-#include <GLFW/glfw3.h>
+#include <OrbitCamera.h>
+#include <TrackballCamera.h>
 
 using namespace dyno;
 
@@ -73,21 +73,22 @@ WSimulationCanvas::WSimulationCanvas()
 		"}"
 		"}.bind(" + mImage->jsRef() + ")");
 
-
+	
+	mImageData.resize(640 * 480 * 3);	// initialize image buffer
 	mJpegEncoder = std::make_unique<ImageEncoderNV>();
-	mJpegEncoder->SetQuality(80);
-
+	mJpegEncoder->SetQuality(90);
 	mJpegResource = std::make_unique<Wt::WMemoryResource>("image/jpeg");
 
 	// create an empty scene
 	mScene = std::make_shared<dyno::SceneGraph>();
 
 	mRenderEngine = new dyno::GLRenderEngine;
-
-	mRenderTarget = new dyno::GLRenderTarget;
-	mRenderTarget->mColorTex.format = GL_RGB;
-	mRenderTarget->mColorTex.internalFormat = GL_RGB;	// SRGB8
-	mRenderTarget->mColorTex.type = GL_UNSIGNED_BYTE;
+	mRenderParams = new dyno::RenderParams;
+	mCamera = std::make_shared<dyno::OrbitCamera>();
+	mCamera->setWidth(640);
+	mCamera->setHeight(480);
+	mCamera->registerPoint(0, 0);
+	mCamera->rotateToPoint(-32, 12);
 
 	// initialize OpenGL context and RenderEngine
 	this->initializeGL();
@@ -96,7 +97,8 @@ WSimulationCanvas::WSimulationCanvas()
 WSimulationCanvas::~WSimulationCanvas()
 {
 	makeCurrent();
-	delete mRenderTarget;
+
+	mRenderEngine->terminate();
 	delete mRenderEngine;
 
 	glfwDestroyWindow(mContext);
@@ -110,8 +112,8 @@ void WSimulationCanvas::initializeGL()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
 	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
 	mContext = glfwCreateWindow(640, 480, "", NULL, NULL);
 	if (!mContext)
 	{
@@ -121,14 +123,24 @@ void WSimulationCanvas::initializeGL()
 
 	makeCurrent();
 
-	mRenderEngine->initialize(640, 480);
-	mRenderTarget->initialize();
+	mRenderEngine->initialize();
 
-	// initialize size
-	mImageData.resize(640 * 480 * 3);
+	// create framebuffer here...
+	frameColor.format = GL_RGB;
+	frameColor.internalFormat = GL_RGB;
+	frameColor.type = GL_BYTE;
+	frameColor.create();
+	frameColor.resize(640, 480);
+
+	framebuffer.create();
+	framebuffer.bind();
+	const unsigned int GL_COLOR_ATTACHMENT0 = 0x8CE0;
+	framebuffer.setTexture2D(GL_COLOR_ATTACHMENT0, frameColor.id);	// 
+	unsigned int buffers[]{ GL_COLOR_ATTACHMENT0 };
+	framebuffer.drawBuffers(1, buffers);
+	framebuffer.unbind();
 
 	doneCurrent();
-
 }
 
 void WSimulationCanvas::makeCurrent()
@@ -144,11 +156,13 @@ void WSimulationCanvas::doneCurrent()
 
 void WSimulationCanvas::layoutSizeChanged(int width, int height)
 {
+	mCamera->setWidth(width);
+	mCamera->setHeight(height);
 	mImageData.resize(width * height * 3);
 
 	this->makeCurrent();
-	mRenderEngine->resize(width, height);
-	mRenderTarget->resize(width, height);
+	// resize framebuffer
+	frameColor.resize(width, height);
 	this->doneCurrent();
 
 	WContainerWidget::layoutSizeChanged(width, height); 
@@ -158,7 +172,8 @@ void WSimulationCanvas::layoutSizeChanged(int width, int height)
 void WSimulationCanvas::onMousePressed(const Wt::WMouseEvent& evt)
 {
 	Wt::Coordinates coord = evt.widget();
-	mRenderEngine->camera()->registerPoint(coord.x, coord.y);
+	mCamera->registerPoint(coord.x, coord.y);
+	
 }
 
 void WSimulationCanvas::onMouseDrag(const Wt::WMouseEvent& evt)
@@ -166,10 +181,10 @@ void WSimulationCanvas::onMouseDrag(const Wt::WMouseEvent& evt)
 	Wt::Coordinates coord = evt.widget();
 
 	if (evt.button() == Wt::MouseButton::Left) {
-		mRenderEngine->camera()->rotateToPoint(coord.x, coord.y);
+		mCamera->rotateToPoint(coord.x, coord.y);
 	}
 	else if (evt.button() == Wt::MouseButton::Middle) {
-		mRenderEngine->camera()->translateToPoint(coord.x, coord.y);
+		mCamera->translateToPoint(coord.x, coord.y);
 	}
 	scheduleRender();
 }
@@ -181,7 +196,7 @@ void WSimulationCanvas::onMouseReleased(const Wt::WMouseEvent& evt)
 
 void WSimulationCanvas::onMouseWheeled(const Wt::WMouseEvent& evt)
 {
-	mRenderEngine->camera()->zoom(-1.0*evt.wheelDelta());
+	mCamera->zoom(-1.0 * evt.wheelDelta());
 	scheduleRender();
 }
 
@@ -195,26 +210,29 @@ void WSimulationCanvas::update()
 	// do render
 	{
 		this->makeCurrent();
-		mRenderTarget->bind();
 
 		if (mScene)
 		{
 			mScene->updateGraphicsContext();
 		}
-		mRenderEngine->draw(mScene.get());
+
+		framebuffer.bind();
+		mRenderEngine->draw(mScene.get(), mCamera.get(), *mRenderParams);
 
 		// dump framebuffer
-		mRenderTarget->mColorTex.dump(mImageData.data());
+		frameColor.dump(mImageData.data());
+		framebuffer.unbind();
+
 		this->doneCurrent();
 	}
 
 	// encode image
 	{
 		mJpegEncoder->Encode(mImageData.data(),
-			mRenderTarget->width, mRenderTarget->height, 0,
+			mCamera->viewportWidth(), mCamera->viewportHeight(), 0,
 			mJpegBuffer);
 
-		Wt::log("info") << mRenderTarget->width << " x " << mRenderTarget->height
+		Wt::log("info") << mCamera->viewportWidth() << " x " << mCamera->viewportHeight()
 			<< ", JPG size: " << mJpegBuffer.size() / 1024 << " kb";
 	}
 
@@ -244,5 +262,5 @@ void WSimulationCanvas::setScene(std::shared_ptr<dyno::SceneGraph> scene)
 
 dyno::RenderParams* WSimulationCanvas::getRenderParams()
 {
-	return mRenderEngine->renderParams();
+	return mRenderParams;
 };

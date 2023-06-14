@@ -58,7 +58,7 @@ private:
 
 	// render
 	Wt::WCheckBox*		mSceneBounds;
-	Wt::WCheckBox*		mAxisHelper;
+	//Wt::WCheckBox*		mAxisHelper;
 	Wt::WCheckBox*		mGroundPlane;
 	Wt::WSlider*		mGroundScale;
 	Wt::WColorPicker*	mBackgroudColor0;
