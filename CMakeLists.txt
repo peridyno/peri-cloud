@@ -40,7 +40,7 @@ target_link_libraries(${target} PRIVATE Wt::Wt Wt::HTTP)
 
 # link dyno
 find_package(Peridyno REQUIRED)
-target_link_libraries(${target} PRIVATE ParticleSystem Peridynamics GLRenderEngine)
+target_link_libraries(${target} PRIVATE Topology ParticleSystem Peridynamics GLRenderEngine)
 
 # for python scripting
 # Jian: put pybind11 at end since there could be header conflict for node.h

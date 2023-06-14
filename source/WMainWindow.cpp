@@ -80,9 +80,9 @@ WMainWindow::WMainWindow()
 		colorMapper->varMax()->setValue(5.0f);
 
 		auto ptRender = std::make_shared<dyno::GLPointVisualModule>();
-		ptRender->setColor(dyno::Vec3f(1, 0, 0));
+		ptRender->setColor(dyno::Color(1, 0, 0));
 		ptRender->setColorMapMode(dyno::GLPointVisualModule::PER_VERTEX_SHADER);
-		ptRender->setColorMapRange(0, 5);
+//		ptRender->setColorMapRange(0, 5);
 		//ptRender->setPointSize(0.005f);
 
 		fluid->stateVelocity()->connect(calculateNorm->inVec());
