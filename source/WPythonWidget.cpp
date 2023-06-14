@@ -46,7 +46,6 @@ WPythonWidget::WPythonWidget()
 
 	// some default code here...
 	std::string source = R"====(# dyno sample
-# dyno sample
 import PyPeridyno as dyno
 
 scene = dyno.SceneGraph()
@@ -112,10 +111,15 @@ void WPythonWidget::execute(const std::string& src)
 		auto locals = py::dict();
 		py::exec(src, py::globals(), locals);
 
-		auto scene = locals["scene"].cast<std::shared_ptr<dyno::SceneGraph>>();
-		//mScene->initialize();
-
-		if(scene) mSignal.emit(scene);
+		if (locals.contains("scene"))
+		{
+			auto scene = locals["scene"].cast<std::shared_ptr<dyno::SceneGraph>>();
+			if (scene) mSignal.emit(scene);
+		}
+		else
+		{
+			Wt::WMessageBox::show("Error", "Please define 'scene = dyno.SceneGraph()'", Wt::StandardButton::Ok);
+		}
 	}
 	catch (const std::exception& e) {
 		Wt::WMessageBox::show("Error", e.what(), Wt::StandardButton::Ok);

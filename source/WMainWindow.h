@@ -15,6 +15,8 @@ class WMainWindow : public Wt::WContainerWidget
 public:
 	WMainWindow();
 	~WMainWindow();		
+
+	void setScene(std::shared_ptr<dyno::SceneGraph> scene);
 	
 private:
 	void initMenu(Wt::WMenu*);
@@ -23,8 +25,6 @@ private:
 	void start();
 	void stop();
 	void step();
-
-	void setScene(std::shared_ptr<dyno::SceneGraph> scene);
 
 private:
 

@@ -55,6 +55,16 @@ if(MSVC)
 			#VS_DEBUGGER_COMMAND_ARGUMENTS "--docroot ${CMAKE_SOURCE_DIR}/docroot --http-listen 0.0.0.0:5000"
 			)
 			
+	# copy dependency dlls
+	add_custom_command(TARGET ${target} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+						$<TARGET_FILE:${target}>		# in case no dlls
+						$<TARGET_RUNTIME_DLLS:${target}>
+						${CMAKE_BINARY_DIR}
+                        #$<TARGET_FILE_DIR:${target}>
+		COMMAND_EXPAND_LISTS
+	)
+
 	# set as startup project for visual studio
 	set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT ${target})
 endif(MSVC) 

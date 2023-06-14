@@ -4,17 +4,11 @@
 #include <Wt/WApplication.h>
 #include <Wt/WMemoryResource.h>
 #include <Wt/WImage.h>
-#include <SceneGraph.h>
-
-#include <Module/CalculateNorm.h>
-#include <ColorMapping.h>
 
 #include <GLFW/glfw3.h>
 
+#include <SceneGraph.h>
 #include <GLRenderEngine.h>
-#include <GLPointVisualModule.h>
-#include <GLSurfaceVisualModule.h>
-
 #include <OrbitCamera.h>
 #include <TrackballCamera.h>
 
@@ -79,9 +73,6 @@ WSimulationCanvas::WSimulationCanvas()
 	mJpegEncoder->SetQuality(90);
 	mJpegResource = std::make_unique<Wt::WMemoryResource>("image/jpeg");
 
-	// create an empty scene
-	mScene = std::make_shared<dyno::SceneGraph>();
-
 	mRenderEngine = new dyno::GLRenderEngine;
 	mRenderParams = new dyno::RenderParams;
 	mCamera = std::make_shared<dyno::OrbitCamera>();
@@ -126,19 +117,19 @@ void WSimulationCanvas::initializeGL()
 	mRenderEngine->initialize();
 
 	// create framebuffer here...
-	frameColor.format = GL_RGB;
-	frameColor.internalFormat = GL_RGB;
-	frameColor.type = GL_BYTE;
-	frameColor.create();
-	frameColor.resize(640, 480);
+	mFrameColor.format = GL_RGB;
+	mFrameColor.internalFormat = GL_RGB;
+	mFrameColor.type = GL_BYTE;
+	mFrameColor.create();
+	mFrameColor.resize(640, 480);
 
-	framebuffer.create();
-	framebuffer.bind();
+	mFramebuffer.create();
+	mFramebuffer.bind();
 	const unsigned int GL_COLOR_ATTACHMENT0 = 0x8CE0;
-	framebuffer.setTexture2D(GL_COLOR_ATTACHMENT0, frameColor.id);	// 
+	mFramebuffer.setTexture2D(GL_COLOR_ATTACHMENT0, mFrameColor.id);	// 
 	unsigned int buffers[]{ GL_COLOR_ATTACHMENT0 };
-	framebuffer.drawBuffers(1, buffers);
-	framebuffer.unbind();
+	mFramebuffer.drawBuffers(1, buffers);
+	mFramebuffer.unbind();
 
 	doneCurrent();
 }
@@ -162,7 +153,7 @@ void WSimulationCanvas::layoutSizeChanged(int width, int height)
 
 	this->makeCurrent();
 	// resize framebuffer
-	frameColor.resize(width, height);
+	mFrameColor.resize(width, height);
 	this->doneCurrent();
 
 	WContainerWidget::layoutSizeChanged(width, height); 
@@ -216,12 +207,12 @@ void WSimulationCanvas::update()
 			mScene->updateGraphicsContext();
 		}
 
-		framebuffer.bind();
+		mFramebuffer.bind();
 		mRenderEngine->draw(mScene.get(), mCamera.get(), *mRenderParams);
 
 		// dump framebuffer
-		frameColor.dump(mImageData.data());
-		framebuffer.unbind();
+		mFrameColor.dump(mImageData.data());
+		mFramebuffer.unbind();
 
 		this->doneCurrent();
 	}

@@ -63,6 +63,6 @@ private:
 	std::shared_ptr<dyno::Camera>	  mCamera;
 
 	// internal framebuffer
-	gl::Framebuffer framebuffer;
-	gl::Texture2D	frameColor;
+	gl::Framebuffer mFramebuffer;
+	gl::Texture2D	mFrameColor;
 };
