@@ -235,12 +235,12 @@ void WRenderParamsWidget::update()
 // 	mCameraClipFar->setValue(mRenderParams->camera.z_max);
 
  	// render
- 	mSceneBounds->setChecked(mRenderParams->showSceneBounds);
- 	//mAxisHelper->setChecked(mRenderParams->showAxisHelper);
- 	mGroundPlane->setChecked(mRenderParams->showGround);
- 	mGroundScale->setValue(mRenderParams->planeScale);
- 	mBackgroudColor0->setColor(Glm2WColor(mRenderParams->bgColor0));
-	mBackgroudColor1->setColor(Glm2WColor(mRenderParams->bgColor1));
+//  	mSceneBounds->setChecked(mRenderParams->showSceneBounds);
+//  	//mAxisHelper->setChecked(mRenderParams->showAxisHelper);
+//  	mGroundPlane->setChecked(mRenderParams->showGround);
+//  	mGroundScale->setValue(mRenderParams->planeScale);
+//  	mBackgroudColor0->setColor(Glm2WColor(mRenderParams->bgColor0));
+// 	mBackgroudColor1->setColor(Glm2WColor(mRenderParams->bgColor1));
 }
 
 void WRenderParamsWidget::updateRenderParams()
@@ -271,12 +271,12 @@ void WRenderParamsWidget::updateRenderParams()
 // 	mRenderParams->camera.z_min = mCameraClipNear->value();
 // 	mRenderParams->camera.z_max = mCameraClipFar->value();
 // 
- 	mRenderParams->showSceneBounds = mSceneBounds->isChecked();
- 	//mRenderParams->showAxisHelper = mAxisHelper->isChecked();
- 	mRenderParams->showGround = mGroundPlane->isChecked();
- 	mRenderParams->planeScale = mGroundScale->value();
- 	mRenderParams->bgColor0 = WColor2Glm(mBackgroudColor0->color());
-	mRenderParams->bgColor1 = WColor2Glm(mBackgroudColor1->color());
+//  	mRenderParams->showSceneBounds = mSceneBounds->isChecked();
+//  	//mRenderParams->showAxisHelper = mAxisHelper->isChecked();
+//  	mRenderParams->showGround = mGroundPlane->isChecked();
+//  	mRenderParams->planeScale = mGroundScale->value();
+//  	mRenderParams->bgColor0 = WColor2Glm(mBackgroudColor0->color());
+// 	mRenderParams->bgColor1 = WColor2Glm(mBackgroudColor1->color());
 
 	mSignal.emit();
 }

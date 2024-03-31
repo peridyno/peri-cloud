@@ -4,8 +4,8 @@
 
 #include <memory>
 
-#include <Rendering/Engine/OpenGL/gl/Framebuffer.h>
-#include <Rendering/Engine/OpenGL/gl/Texture.h>
+#include <Rendering/Engine/OpenGL/GraphicsObject/Framebuffer.h>
+#include <Rendering/Engine/OpenGL/GraphicsObject/Texture.h>
 
 
 namespace dyno
@@ -63,6 +63,6 @@ private:
 	std::shared_ptr<dyno::Camera>	  mCamera;
 
 	// internal framebuffer
-	gl::Framebuffer mFramebuffer;
-	gl::Texture2D	mFrameColor;
+	dyno::Framebuffer mFramebuffer;
+	dyno::Texture2D	mFrameColor;
 };

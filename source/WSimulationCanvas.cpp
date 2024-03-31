@@ -126,7 +126,7 @@ void WSimulationCanvas::initializeGL()
 	mFramebuffer.create();
 	mFramebuffer.bind();
 	const unsigned int GL_COLOR_ATTACHMENT0 = 0x8CE0;
-	mFramebuffer.setTexture2D(GL_COLOR_ATTACHMENT0, mFrameColor.id);	// 
+	mFramebuffer.setTexture2D(GL_COLOR_ATTACHMENT0, &mFrameColor);	// 
 	unsigned int buffers[]{ GL_COLOR_ATTACHMENT0 };
 	mFramebuffer.drawBuffers(1, buffers);
 	mFramebuffer.unbind();
@@ -207,8 +207,21 @@ void WSimulationCanvas::update()
 			mScene->updateGraphicsContext();
 		}
 
+		// update rendering params
+		mRenderParams->width = mCamera->viewportWidth();
+		mRenderParams->height = mCamera->viewportHeight();
+		mRenderParams->transforms.model = glm::mat4(1);	 // TODO: world transform?
+		mRenderParams->transforms.view = mCamera->getViewMat();
+		mRenderParams->transforms.proj = mCamera->getProjMat();
+
+		// Jian SHI: hack for unit scaling...
+		float planeScale = mRenderEngine->planeScale;
+		float rulerScale = mRenderEngine->rulerScale;
+		mRenderEngine->planeScale *= mCamera->unitScale();
+		mRenderEngine->rulerScale *= mCamera->unitScale();
+
 		mFramebuffer.bind();
-		mRenderEngine->draw(mScene.get(), mCamera.get(), *mRenderParams);
+		mRenderEngine->draw(mScene.get(), *mRenderParams);
 
 		// dump framebuffer
 		mFrameColor.dump(mImageData.data());
